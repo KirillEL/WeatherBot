@@ -10,6 +10,7 @@ class Bot {
     private bot: Telegraf<Context<Update>>;
     private place: string;
     private state: number = 0;
+    private stop_listen: boolean = false;
 
     start_handler(): void | undefined {
         this.bot.start(async ctx => {
@@ -20,22 +21,24 @@ class Bot {
 
     choosePlaceHandler(): void | undefined {
         this.bot.command('choose', async ctx => {
-            this.state = 1;
-            if (this.state === 1) {
-                await ctx.reply("Выберите Страну/Город: ")
-                    .then(res => {
-                        this.bot.on('text', async ctx => {
+            this.stop_listen = false;
+            await ctx.reply("Выберите Страну/Город: ")
+                .then(res => {
+                    this.bot.on('text', async ctx => {
+                        if (!this.stop_listen) {
                             this.place = ctx.message.text;
                             ctx.reply(`Вы выбрали: ${ctx.message.text}`);
                             setTimeout(() => {
                                 this.sendWeatherHandler(ctx);
                             }, 1000);
-                        })
+                        }
                     })
-                    .catch(rej => {
-                        ctx.reply("bad request");
-                    })
-            }
+
+                })
+                .catch(rej => {
+                    ctx.reply("bad request");
+                })
+
         });
         return;
     }
@@ -62,6 +65,13 @@ class Bot {
         }
     }
 
+    closeHandler(): void | undefined {
+        this.bot.command('close', async ctx => {
+            this.stop_listen = true;
+            await ctx.replyWithHTML("<b>Чтобы снова узнать погоду\nнужно ввести команду /choose</b>");
+        });
+    }
+
     constructor() {
         this.bot = new Telegraf<Context<Update>>(process.env.BOT_TOKEN);
     }
@@ -75,6 +85,7 @@ const my_bot: Bot = new Bot();
 my_bot.init();
 my_bot.start_handler();
 my_bot.choosePlaceHandler();
+my_bot.closeHandler();
 
 
 

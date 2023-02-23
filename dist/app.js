@@ -13,30 +13,30 @@ import fetch from 'node-fetch';
 config();
 class Bot {
     start_handler() {
-        this.bot.start(ctx => {
-            ctx.reply(`Привет ${ctx.from.first_name} !`);
-            ctx.reply("Данный бот подскажет вам\nПогоду в любой точке мира! ");
-        });
+        this.bot.start((ctx) => __awaiter(this, void 0, void 0, function* () {
+            yield ctx.reply(`Привет ${ctx.from.first_name} !`);
+            yield ctx.reply("Данный бот подскажет вам\nПогоду в любой точке мира! ");
+        }));
     }
     choosePlaceHandler() {
-        this.bot.command('choose', ctx => {
-            this.state = 1;
-            if (this.state === 1) {
-                return ctx.reply("Выберите Страну/Город: ")
-                    .then(res => {
-                    this.bot.on('text', (ctx) => __awaiter(this, void 0, void 0, function* () {
+        this.bot.command('choose', (ctx) => __awaiter(this, void 0, void 0, function* () {
+            this.stop_listen = false;
+            yield ctx.reply("Выберите Страну/Город: ")
+                .then(res => {
+                this.bot.on('text', (ctx) => __awaiter(this, void 0, void 0, function* () {
+                    if (!this.stop_listen) {
                         this.place = ctx.message.text;
                         ctx.reply(`Вы выбрали: ${ctx.message.text}`);
                         setTimeout(() => {
                             this.sendWeatherHandler(ctx);
                         }, 1000);
-                    }));
-                })
-                    .catch(rej => {
-                    ctx.reply("bad request");
-                });
-            }
-        });
+                    }
+                }));
+            })
+                .catch(rej => {
+                ctx.reply("bad request");
+            });
+        }));
         return;
     }
     sendWeatherHandler(ctx) {
@@ -59,8 +59,15 @@ class Bot {
             ctx.reply("Ошибка! Вы не выбрали город/страну!");
         }
     }
+    closeHandler() {
+        this.bot.command('close', (ctx) => __awaiter(this, void 0, void 0, function* () {
+            this.stop_listen = true;
+            yield ctx.replyWithHTML("<b>Чтобы снова узнать погоду\nнужно ввести команду /choose</b>");
+        }));
+    }
     constructor() {
         this.state = 0;
+        this.stop_listen = false;
         this.bot = new Telegraf(process.env.BOT_TOKEN);
     }
     init() {
@@ -71,3 +78,4 @@ const my_bot = new Bot();
 my_bot.init();
 my_bot.start_handler();
 my_bot.choosePlaceHandler();
+my_bot.closeHandler();
