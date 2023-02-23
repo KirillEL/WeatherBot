@@ -1,1 +1,1 @@
-** Telegram bot using TypeScript and Telegraf
+Telegram bot using TypeScript and Telegraf
